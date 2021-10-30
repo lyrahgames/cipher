@@ -1,0 +1,5 @@
+libs =
+import libs += lib{lyrahgames-cipher}
+import libs += fmt%lib{fmt}
+
+exe{cipher}: {hxx cxx}{**} $libs

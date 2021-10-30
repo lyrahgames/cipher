@@ -1,0 +1,12 @@
+libs =
+import libs += lyrahgames-xstd%lib{lyrahgames-xstd}
+
+lib{lyrahgames-cipher}: hxx{**} $libs
+{
+  cxx.export.poptions = "-I$out_root" "-I$src_root"
+  cxx.export.libs = $libs
+}
+
+cxx.poptions =+ "-I$out_root" "-I$src_root"
+
+hxx{*}: install = include/lyrahgames/cipher/

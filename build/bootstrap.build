@@ -1,0 +1,7 @@
+project = lyrahgames-cipher
+
+using version
+using config
+using test
+using install
+using dist
