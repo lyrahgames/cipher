@@ -23,6 +23,8 @@ using namespace fmt::literals;
 
 static constexpr size_t indent = 10;
 
+bool quiet = false;
+
 inline auto to_string(source_location location) {
   return format(
       "{} {}:",
@@ -50,12 +52,14 @@ inline auto log(auto& stream,
 
 inline void info(auto&& x,
                  source_location location = source_location::current()) {
+  if (quiet) return;
   log(stdout, prefix(fg(color::green), "INFO:"), forward<decltype(x)>(x),
       location);
 }
 
 inline void warning(auto&& x,
                     source_location location = source_location::current()) {
+  if (quiet) return;
   log(stderr, prefix(fg(color::orange), "WARNING:"), forward<decltype(x)>(x),
       location);
 }

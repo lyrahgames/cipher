@@ -16,6 +16,7 @@
 !*testscript
 
 !*.md
+!*.txt
 
 !.clang-format
 
