@@ -1,0 +1,5 @@
+exe{vigenere-decrypt}: {hxx cxx}{**} $libs
+
+exe{vigenere-decrypt}: test.arguments = -qi "$src_base/Lorem1.txt"
+exe{vigenere-decrypt}: file{Lorem1-decrypted.txt}: test.stdout = true
+

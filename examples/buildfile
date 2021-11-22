@@ -4,4 +4,4 @@ import libs += lyrahgames-log%lib{lyrahgames-log}
 import libs += lyrahgames-options%lib{lyrahgames-options}
 import libs += fmt%lib{fmt}
 
-./: 01-add-decrypt/
+./: {*/ -build/}
