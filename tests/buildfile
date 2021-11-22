@@ -1,8 +1,6 @@
 libs =
 import libs += doctest%lib{doctest}
-import libs += lib{lyrahgames-cipher}
+import libs += lyrahgames-cipher%lib{lyrahgames-cipher}
 
 exe{tests}: {hxx cxx}{**} $libs
-{
-  test = true
-}
+

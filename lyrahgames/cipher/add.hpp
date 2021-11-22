@@ -10,6 +10,7 @@ namespace lyrahgames::cipher {
 template <generic::add_block T>
 struct add {
   using block = T;
+  using key = block;
 
   /// Returns randomly generated key for additive cipher.
   static constexpr auto random_key(auto&& rng) {

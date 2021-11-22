@@ -1,0 +1,6 @@
+libs =
+import libs += lyrahgames-cipher%lib{lyrahgames-cipher}
+import libs += lyrahgames-log%lib{lyrahgames-log}
+import libs += fmt%lib{fmt}
+
+./: {*/ -build/}
