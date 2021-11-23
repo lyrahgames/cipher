@@ -1,0 +1,3 @@
+$* -qi "$src_base/Lorem1.txt" >="$src_base/Lorem1-decrypted.txt" == 0
+$* -qi "$src_base/Lorem2.txt" >="$src_base/Lorem2-decrypted.txt" == 0
+$* -qi "$src_base/Lorem3.txt" >="$src_base/Lorem3-decrypted.txt" == 0

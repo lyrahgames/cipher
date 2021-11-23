@@ -67,7 +67,9 @@ int main(int argc, char* argv[]) {
   cipher::key_type key{};
 
   log.info("Doing cryptanalysis for given file by counting frequencies.");
-  key = cipher::frequency_analysis(' ', 3, content);
+  auto key_size = cipher::coincidence_analysis(content);
+  log.info(format("Estimated key size = '{}'", key_size));
+  key = cipher::frequency_analysis(' ', key_size, content);
   log.info(format("Estimated Key = '{}'", (const char*)key.data()));
   log.info("Decrypt the given file with the estimated key.");
   cipher::decrypt(key, content);

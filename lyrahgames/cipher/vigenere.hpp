@@ -1,5 +1,6 @@
 #pragma once
 #include <cassert>
+#include <iostream>
 #include <map>
 #include <random>
 #include <vector>
@@ -82,6 +83,36 @@ struct vigenere {
       key[i] = max_it->first - most_frequent;
     }
     return key;
+  }
+
+  static constexpr auto coincidence_analysis(
+      const generic::input_range<block> auto& text) -> size_t {
+    constexpr size_t count = 100;
+    std::array<float, count> coincidence{};
+    for (size_t key_size = 1; key_size < count; ++key_size) {
+      std::vector<std::map<block, int>> frequency(key_size);
+      for (size_t k = 0; auto c : text) {
+        ++frequency[k][c];
+        k = (k + 1) % key_size;
+      }
+      // Compute mean coincidence over subparts of text.
+      for (auto& m : frequency) {
+        float t = 0;
+        for (const auto [c, f] : m)
+          t += f * (f - 1);
+        t *= key_size * key_size;
+        t /= size(text) * (size(text) - key_size);
+        coincidence[key_size] += t;
+      }
+      coincidence[key_size] /= key_size;
+      // std::cout << key_size << ": " << coincidence[key_size] << '\n';
+      if ((key_size != 1) &&
+          (coincidence[key_size - 1] / coincidence[key_size] < 0.6))
+        return key_size;
+    }
+    return count;
+    // const auto max_it = std::max_element(begin(coincidence),
+    // end(coincidence)); return max_it - begin(coincidence);
   }
 };
 
