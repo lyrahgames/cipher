@@ -63,12 +63,20 @@ constexpr auto f2_polynom_inv(uint x, uint mod) noexcept {
   return t0;
 }
 
-constexpr auto aes_s_box(uint8_t x) noexcept {
+constexpr auto aes_s_box(uint8_t x) noexcept -> uint8_t {
   using namespace std;
   const auto p = 0b1'0001'1011u;
   const uint8_t b = f2_polynom_inv(uint16_t(x), uint16_t(p));
   const uint8_t s =
       b ^ rotl(b, 1) ^ rotl(b, 2) ^ rotl(b, 3) ^ rotl(b, 4) ^ uint8_t(0x63);
+  return s;
+}
+
+constexpr auto aes_inv_s_box(uint8_t x) noexcept -> uint8_t {
+  using namespace std;
+  const uint8_t b = rotl(x, 1) ^ rotl(x, 3) ^ rotl(x, 6) ^ uint8_t(0x05);
+  const auto p = 0b1'0001'1011u;
+  const uint8_t s = f2_polynom_inv(uint16_t(b), uint16_t(p));
   return s;
 }
 
