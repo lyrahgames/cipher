@@ -48,6 +48,21 @@ constexpr auto f2_polynom_divmod(uint m, uint n) noexcept {
   return std::pair{q, m};
 }
 
+template <std::unsigned_integral uint>
+constexpr auto f2_polynom_inv(uint x, uint mod) noexcept {
+  uint t0 = 0, t1 = 1;
+  uint r0 = mod, r1 = x;
+  while (r1) {
+    const auto [q, r] = f2_polynom_divmod(r0, r1);
+    r0 = r1;
+    r1 = r;
+    const auto t = t0 ^ f2_polynom_mul(q, t1);
+    t0 = t1;
+    t1 = t;
+  }
+  return t0;
+}
+
 struct galois256 {
   constexpr galois256() = default;
   explicit constexpr galois256(uint8_t x) : data{x} {}
