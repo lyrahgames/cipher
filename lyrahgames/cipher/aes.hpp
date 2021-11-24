@@ -63,6 +63,15 @@ constexpr auto f2_polynom_inv(uint x, uint mod) noexcept {
   return t0;
 }
 
+constexpr auto aes_s_box(uint8_t x) noexcept {
+  using namespace std;
+  const auto p = 0b1'0001'1011u;
+  const uint8_t b = f2_polynom_inv(uint16_t(x), uint16_t(p));
+  const uint8_t s =
+      b ^ rotl(b, 1) ^ rotl(b, 2) ^ rotl(b, 3) ^ rotl(b, 4) ^ uint8_t(0x63);
+  return s;
+}
+
 struct galois256 {
   constexpr galois256() = default;
   explicit constexpr galois256(uint8_t x) : data{x} {}
