@@ -9,7 +9,7 @@
 using namespace std;
 using namespace lyrahgames;
 
-SCENARIO("AES Substitution Box") {
+SCENARIO("AES Substitution Box and Inverse Substitution Box and Bijectivity") {
   for (uint8_t i = 0; const auto x : array<uint8_t, 256>{
                           0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5,  //
                           0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,  //
@@ -46,11 +46,10 @@ SCENARIO("AES Substitution Box") {
                       }) {
     CAPTURE(i);
     CHECK(cipher::aes::substitution(i) == x);
+    CHECK(cipher::aes::inv_substitution(cipher::aes::substitution(i)) == i);
     ++i;
   }
-}
 
-SCENARIO("AES Inverse Substitution Box") {
   for (uint8_t i = 0; const auto x : array<uint8_t, 256>{
                           0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38,  //
                           0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
@@ -87,6 +86,20 @@ SCENARIO("AES Inverse Substitution Box") {
                       }) {
     CAPTURE(i);
     CHECK(cipher::aes::inv_substitution(i) == x);
+    CHECK(cipher::aes::substitution(cipher::aes::inv_substitution(i)) == i);
     ++i;
+  }
+}
+
+SCENARIO("AES MixColumn and Inverse Bijectivity") {
+  mt19937 rng{random_device{}()};
+  const int n = 1'000'000;
+  for (int i = 0; i < n; ++i) {
+    uint32_t x = rng();
+    auto y = x;
+    auto col = reinterpret_cast<uint8_t*>(&y);
+    cipher::aes::mix_column(col);
+    cipher::aes::inv_mix_column(col);
+    CHECK(x == y);
   }
 }

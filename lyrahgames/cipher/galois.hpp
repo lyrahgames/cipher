@@ -6,6 +6,7 @@ namespace lyrahgames::cipher {
 struct galois8 {
   constexpr galois8() = default;
   explicit constexpr galois8(uint8_t x) : data{x} {}
+  explicit constexpr operator uint8_t() { return data; }
   friend constexpr auto operator<=>(const galois8&,
                                     const galois8&) noexcept = default;
   uint8_t data;
