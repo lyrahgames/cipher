@@ -429,4 +429,19 @@ SCENARIO("") {
     CHECK(cipher::aes_inv_s_box(i) == x);
     ++i;
   }
+
+  using cipher::galois8;
+  for (int i = 0; i < 256; ++i) {
+    for (int j = 0; j < 256; ++j) {
+      const auto k = cipher::f2_polynom_mul(uint16_t(i), uint16_t(j));
+      const auto [q, r] = cipher::f2_polynom_divmod(k, uint16_t(0b1'0001'1011));
+      CHECK(galois8(i) * galois8(j) == galois8(r));
+    }
+  }
+  for (int i = 0; i < 256; ++i) {
+    for (int j = 1; j < 256; ++j) {
+      const auto t = galois8(i) / galois8(j);
+      CHECK(t * galois8(j) == galois8(i));
+    }
+  }
 }

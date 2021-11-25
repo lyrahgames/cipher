@@ -80,23 +80,72 @@ constexpr auto aes_inv_s_box(uint8_t x) noexcept -> uint8_t {
   return s;
 }
 
-struct galois256 {
-  constexpr galois256() = default;
-  explicit constexpr galois256(uint8_t x) : data{x} {}
-  friend constexpr auto operator<=>(const galois256&,
-                                    const galois256&) noexcept = default;
+struct aes_block {
+  std::array<uint8_t, 16> data;
+};
+
+constexpr auto aes_sub_bytes(aes_block block) noexcept -> aes_block {
+  aes_block result;
+  for (int i = 0; i < 16; ++i) result.data[i] = aes_s_box(block.data[i]);
+  return result;
+}
+
+constexpr auto aes_shift_rows(aes_block block) noexcept -> aes_block {
+  aes_block result{{
+      block.data[0],
+      block.data[5],
+      block.data[10],
+      block.data[15],
+
+      block.data[1],
+      block.data[6],
+      block.data[11],
+      block.data[12],
+
+      block.data[2],
+      block.data[7],
+      block.data[8],
+      block.data[13],
+
+      block.data[3],
+      block.data[4],
+      block.data[9],
+      block.data[14],
+  }};
+  return result;
+}
+
+constexpr auto aes_mix_columns(aes_block block) noexcept -> aes_block {
+  aes_block result;
+
+  return result;
+}
+
+struct galois8 {
+  constexpr galois8() = default;
+  explicit constexpr galois8(uint8_t x) : data{x} {}
+  friend constexpr auto operator<=>(const galois8&,
+                                    const galois8&) noexcept = default;
   uint8_t data;
 };
 
-constexpr auto operator+(galois256 x, galois256 y) noexcept {
-  return galois256(x.data ^ y.data);
+constexpr auto operator+(galois8 x) noexcept -> galois8 {
+  return x;
 }
 
-constexpr auto operator-(galois256 x, galois256 y) noexcept {
+constexpr auto operator-(galois8 x) noexcept -> galois8 {
+  return x;
+}
+
+constexpr auto operator+(galois8 x, galois8 y) noexcept -> galois8 {
+  return galois8(x.data ^ y.data);
+}
+
+constexpr auto operator-(galois8 x, galois8 y) noexcept -> galois8 {
   return x + y;
 }
 
-constexpr auto operator*(galois256 x, galois256 y) noexcept {
+constexpr auto operator*(galois8 x, galois8 y) noexcept -> galois8 {
   // uint16_t a = x.data;
   // uint16_t b = y.data;
   // uint16_t result = 0;
@@ -111,14 +160,35 @@ constexpr auto operator*(galois256 x, galois256 y) noexcept {
   // if ((mod >> 4) & 1) result ^= 0b10101011;
   // if ((mod >> 5) & 1) result ^= 0b01001101;
   // if ((mod >> 6) & 1) result ^= 0b10011010;
-  // return galois256(result);
-  const auto t = f2_polynom_mul(uint16_t(x.data), uint16_t(y.data));
-  const auto [q, r] = f2_polynom_divmod(t, uint16_t(0b1'0001'1011u));
-  return galois256(r);
+  // return galois8(result);
+
+  // const auto t = f2_polynom_mul(uint16_t(x.data), uint16_t(y.data));
+  // const auto [q, r] = f2_polynom_divmod(t, uint16_t(0b1'0001'1011u));
+  // return galois8(r);
+
+  using namespace std;
+  constexpr uint8_t mod = 0b0001'1011;
+
+  auto p = x.data;  // p(x)
+  auto q = y.data;  // q(x)
+  uint8_t r = 0;    // result r(x) = p(x) * q(x)
+
+  while (q) {
+    r ^= (q & 1) ? p : 0;
+    q >>= 1;
+    p = (p << 1) ^ ((p & 0x80) ? mod : 0);  // p(x) = x * p(x)
+  }
+
+  return galois8(r);
 }
 
-constexpr auto operator/(galois256 x, galois256 y) noexcept {
-  return galois256(0);
+constexpr auto operator~(galois8 x) noexcept -> galois8 {
+  const auto p = 0b1'0001'1011u;
+  return galois8(f2_polynom_inv(uint16_t(x.data), uint16_t(p)));
+}
+
+constexpr auto operator/(galois8 x, galois8 y) noexcept {
+  return x * ~y;
 }
 
 }  // namespace lyrahgames::cipher
