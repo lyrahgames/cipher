@@ -196,6 +196,8 @@ SCENARIO("AES Encryption Test Block 1") {
     for (int i = 0; i < 16; ++i) text[i] = plain[i];
     cipher::aes::encrypt(text, round_keys);
     for (int i = 0; i < 16; ++i) CHECK(text[i] == crypt[i]);
+    cipher::aes::decrypt(text, round_keys);
+    for (int i = 0; i < 16; ++i) CHECK(text[i] == plain[i]);
   }
 }
 
@@ -292,5 +294,7 @@ SCENARIO("AES Encryption Test Block 2") {
     for (int i = 0; i < 16; ++i) text[i] = plain[i];
     cipher::aes::encrypt(text, round_keys);
     for (int i = 0; i < 16; ++i) CHECK(text[i] == crypt[i]);
+    cipher::aes::decrypt(text, round_keys);
+    for (int i = 0; i < 16; ++i) CHECK(text[i] == plain[i]);
   }
 }

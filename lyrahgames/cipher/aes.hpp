@@ -34,6 +34,12 @@ constexpr int shift_row_permutation[] = {
     8,  13, 2,  7,   //
     12, 1,  6,  11,  //
 };
+constexpr int inv_shift_row_permutation[] = {
+    0,  13, 10, 7,   //
+    4,  1,  14, 11,  //
+    8,  5,  2,  15,  //
+    12, 9,  6,  3,   //
+};
 
 constexpr void mix_column(uint8_t* col) noexcept {
   uint8_t a[4], b[4], c[4];
@@ -70,14 +76,28 @@ constexpr void sub_bytes(uint8_t* data) noexcept {
   for (int i = 0; i < 16; ++i) data[i] = substitution(data[i]);
 }
 
+constexpr void inv_sub_bytes(uint8_t* data) noexcept {
+  for (int i = 0; i < 16; ++i) data[i] = inv_substitution(data[i]);
+}
+
 constexpr void shift_rows(uint8_t* data) noexcept {
   uint8_t t[16];
   for (int i = 0; i < 16; ++i) t[i] = data[i];
   for (int i = 0; i < 16; ++i) data[i] = t[shift_row_permutation[i]];
 }
 
+constexpr void inv_shift_rows(uint8_t* data) noexcept {
+  uint8_t t[16];
+  for (int i = 0; i < 16; ++i) t[i] = data[i];
+  for (int i = 0; i < 16; ++i) data[i] = t[inv_shift_row_permutation[i]];
+}
+
 constexpr void mix_columns(uint8_t* data) noexcept {
   for (int i = 0; i < 4; ++i) mix_column(data + 4 * i);
+}
+
+constexpr void inv_mix_columns(uint8_t* data) noexcept {
+  for (int i = 0; i < 4; ++i) inv_mix_column(data + 4 * i);
 }
 
 constexpr void encrypt(uint8_t* data, uint8_t* keys) noexcept {
@@ -91,6 +111,19 @@ constexpr void encrypt(uint8_t* data, uint8_t* keys) noexcept {
   sub_bytes(data);
   shift_rows(data);
   add_round_key(data, keys + 16 * 10);
+}
+
+constexpr void decrypt(uint8_t* data, uint8_t* keys) noexcept {
+  add_round_key(data, keys + 16 * 10);
+  inv_shift_rows(data);
+  inv_sub_bytes(data);
+  for (int i = 9; i > 0; --i) {
+    add_round_key(data, keys + 16 * i);
+    inv_mix_columns(data);
+    inv_shift_rows(data);
+    inv_sub_bytes(data);
+  }
+  add_round_key(data, keys + 0);
 }
 
 }  // namespace aes
