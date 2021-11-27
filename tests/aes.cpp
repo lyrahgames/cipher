@@ -140,6 +140,13 @@ SCENARIO("AES Encryption Test Block 1") {
       0xe1, 0x3f, 0x0c, 0xc8, 0xb6, 0x63, 0x0c, 0xa6,  //
   };
 
+  uint8_t keys[11 * 16];
+  cipher::aes::key_expansion(round_keys, keys);
+  for (int i = 0; i < 11 * 16; ++i) {
+    CAPTURE(i);
+    REQUIRE(round_keys[i] == keys[i]);
+  }
+
   for (auto& [plain, crypt] : {
            pair<array<uint8_t, 16>, array<uint8_t, 16>>       //
            {{0x5c, 0xf6, 0xee, 0x79, 0x2c, 0xdf, 0x05, 0xe1,  //
@@ -236,6 +243,13 @@ SCENARIO("AES Encryption Test Block 2") {
       0x13, 0x11, 0x1d, 0x7f, 0xe3, 0x94, 0x4a, 0x17,  //
       0xf3, 0x07, 0xa7, 0x8b, 0x4d, 0x2b, 0x30, 0xc5,  //
   };
+
+  uint8_t keys[11 * 16];
+  cipher::aes::key_expansion(round_keys, keys);
+  for (int i = 0; i < 11 * 16; ++i) {
+    CAPTURE(i);
+    REQUIRE(round_keys[i] == keys[i]);
+  }
 
   for (auto& [plain, crypt] : {
            pair<array<uint8_t, 16>, array<uint8_t, 16>>  //

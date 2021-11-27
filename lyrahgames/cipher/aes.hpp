@@ -126,6 +126,26 @@ constexpr void decrypt(uint8_t* data, uint8_t* keys) noexcept {
   add_round_key(data, keys + 0);
 }
 
+constexpr auto key_expansion(uint8_t* key, uint8_t* round_keys) noexcept {
+  for (int i = 0; i < 16; ++i) round_keys[i] = key[i];
+  galois8 rc{1};
+  for (int i = 1; i <= 10; ++i) {
+    round_keys[16 * i + 0] = round_keys[16 * (i - 1) + 0] ^
+                             substitution(round_keys[16 * i + 0 - 3]) ^
+                             uint8_t(rc);
+    rc *= galois8{2};
+    round_keys[16 * i + 1] =
+        round_keys[16 * (i - 1) + 1] ^ substitution(round_keys[16 * i + 1 - 3]);
+    round_keys[16 * i + 2] =
+        round_keys[16 * (i - 1) + 2] ^ substitution(round_keys[16 * i + 2 - 3]);
+    round_keys[16 * i + 3] =
+        round_keys[16 * (i - 1) + 3] ^ substitution(round_keys[16 * i + 3 - 7]);
+    for (int j = 4; j < 16; ++j)
+      round_keys[16 * i + j] =
+          round_keys[16 * (i - 1) + j] ^ round_keys[16 * i + j - 4];
+  }
+}
+
 }  // namespace aes
 
 }  // namespace lyrahgames::cipher
