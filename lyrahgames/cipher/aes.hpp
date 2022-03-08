@@ -126,7 +126,7 @@ constexpr void decrypt(uint8_t* data, uint8_t* keys) noexcept {
   add_round_key(data, keys + 0);
 }
 
-constexpr auto key_expansion(uint8_t* key, uint8_t* round_keys) noexcept {
+constexpr auto key_expansion(const uint8_t* key, uint8_t* round_keys) noexcept {
   for (int i = 0; i < 16; ++i) round_keys[i] = key[i];
   galois8 rc{1};
   for (int i = 1; i <= 10; ++i) {

@@ -163,7 +163,7 @@ constexpr auto hash(czstring str) noexcept {
   return hash(str, std::strlen(str));
 }
 
-inline auto hash(const std::string str) noexcept {
+inline auto hash(const std::string& str) noexcept {
   return hash(str.c_str(), str.size());
 }
 
