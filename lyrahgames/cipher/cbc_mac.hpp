@@ -17,8 +17,10 @@ using key_type = std::array<uint8_t, 16>;
 
 // CBC-MAC is the first algorithm in the ISO/IEC 9797-13 standard.
 // Here, we use AES with 128-bit keys and blocks and padding strategy 3.
-constexpr auto mac(const key_type& key, const char* data, size_t n) noexcept
-    -> mac_type {
+constexpr auto mac(const key_type& key,
+                   const char* data,
+                   size_t n,
+                   uint64_t nonce = 0) noexcept -> mac_type {
   // Prepare round keys for AES block encryption.
   uint8_t keys[11 * 16];
   aes::key_expansion(key.data(), keys);
@@ -29,9 +31,11 @@ constexpr auto mac(const key_type& key, const char* data, size_t n) noexcept
   // This allows security for variable-length messages.
   // The size of the message in bits is stored
   // in a first block in big-endian format padded with zero bits.
-  const auto message_size = n * 8;
-  for (size_t i = 0; i < sizeof(size_t); ++i)
+  const auto message_size = uint64_t(n) * 8;
+  for (size_t i = 0; i < sizeof(uint64_t); ++i) {
     result[15 - i] = message_size >> (8 * i);
+    result[7 - i] = nonce >> (8 * i);
+  }
 
   // The initialization vector (IV) has to be constant and zero.
   // Otherwise, the generated MAC is vulnerable.
@@ -61,7 +65,7 @@ constexpr auto mac(const key_type& key, const char* data, size_t n) noexcept
   return result;
 }
 
-constexpr auto mac(const key_type& key, const char* str) noexcept {
+inline auto mac(const key_type& key, const char* str) noexcept {
   return mac(key, str, std::strlen(str));
 }
 
