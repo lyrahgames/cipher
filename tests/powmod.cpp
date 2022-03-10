@@ -27,6 +27,7 @@ SCENARIO("Modular Exponentiation with 64-bit Unsigned Integers") {
 
 SCENARIO("Modular Exponentiation with GNU Multiple Precision") {
   gmp_randclass rng{gmp_randinit_default};
+  rng.seed(random_device{}());
   constexpr int n = 1000;
   for (int i = 0; i < n; ++i) {
     const mpz_class x = rng.get_z_bits(512);
