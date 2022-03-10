@@ -5,5 +5,6 @@
 #include <lyrahgames/cipher/ascii_block.hpp>
 #include <lyrahgames/cipher/cbc_mac.hpp>
 #include <lyrahgames/cipher/ccm.hpp>
+#include <lyrahgames/cipher/rsa.hpp>
 #include <lyrahgames/cipher/sha1.hpp>
 #include <lyrahgames/cipher/vigenere.hpp>

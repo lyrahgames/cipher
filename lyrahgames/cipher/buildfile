@@ -1,5 +1,6 @@
 libs =
 import libs += lyrahgames-xstd%lib{lyrahgames-xstd}
+import libs += gmpxx%lib{gmpxx}
 
 lib{lyrahgames-cipher}: hxx{**} $libs
 {
