@@ -1,3 +1,4 @@
+#include <bitset>
 #include <iostream>
 #include <numeric>
 #include <random>
@@ -8,6 +9,7 @@
 
 using namespace std;
 using namespace lyrahgames;
+using namespace cipher;
 
 SCENARIO("AES Substitution Box and Inverse Substitution Box and Bijectivity") {
   for (uint8_t i = 0; const auto x : array<uint8_t, 256>{

@@ -12,13 +12,9 @@ struct galois8 {
   uint8_t data;
 };
 
-constexpr auto operator+(galois8 x) noexcept -> galois8 {
-  return x;
-}
+constexpr auto operator+(galois8 x) noexcept -> galois8 { return x; }
 
-constexpr auto operator-(galois8 x) noexcept -> galois8 {
-  return x;
-}
+constexpr auto operator-(galois8 x) noexcept -> galois8 { return x; }
 
 constexpr auto operator+(galois8 x, galois8 y) noexcept -> galois8 {
   return galois8(x.data ^ y.data);
@@ -70,9 +66,7 @@ constexpr auto operator~(galois8 x) noexcept -> galois8 {
   return galois8(f2_polynomial_inv(uint16_t(x.data), uint16_t(p)));
 }
 
-constexpr auto operator/(galois8 x, galois8 y) noexcept {
-  return x * ~y;
-}
+constexpr auto operator/(galois8 x, galois8 y) noexcept { return x * ~y; }
 
 constexpr auto operator+=(galois8& x, galois8 y) noexcept -> galois8& {
   x.data ^= y.data;

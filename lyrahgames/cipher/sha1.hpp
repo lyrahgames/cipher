@@ -92,8 +92,7 @@ constexpr auto read(block_type& block, const char* ptr) noexcept {
   return ptr;
 }
 
-constexpr auto read_tail(block_type& block,
-                         const char* ptr,
+constexpr auto read_tail(block_type& block, const char* ptr,
                          size_t trail_byte_count) noexcept {
   const size_t trail_uint32_count = trail_byte_count / sizeof(uint32_t);
   const size_t trail_uint32_byte_count =
@@ -159,9 +158,7 @@ constexpr auto hash(const char* data, size_t n) -> hash_type {
   return result;
 }
 
-inline auto hash(czstring str) noexcept {
-  return hash(str, std::strlen(str));
-}
+inline auto hash(czstring str) noexcept { return hash(str, std::strlen(str)); }
 
 inline auto hash(const std::string& str) noexcept {
   return hash(str.c_str(), str.size());
