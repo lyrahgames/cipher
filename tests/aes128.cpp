@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 //
+#include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <random>
@@ -14,6 +15,46 @@ SCENARIO("AES-128: S-Box Bijectivity") {
     CHECK(aes128::inv_s_box(aes128::s_box(i)) == i);
     CHECK(aes128::s_box(aes128::inv_s_box(i)) == i);
   }
+}
+
+// SCENARIO("") {
+//   // mt19937 rng{random_device{}()};
+//   random_device rng{};
+//   using clock = chrono::high_resolution_clock;
+//   uint32_t block[4]{rng(), rng(), rng(), rng()};
+
+//   MESSAGE(hex << setw(8) << block[0] << block[1] << block[2] << block[3]);
+
+//   const auto start = clock::now();
+//   for (size_t i = 0; i < 1'000'000'000; ++i)
+//   aes128::sub_bytes((uint8_t*)block); const auto end = clock::now(); const
+//   auto time = chrono::duration<float>(end - start).count();
+
+//   MESSAGE(hex << setw(8) << block[0] << block[1] << block[2] << block[3]);
+//   MESSAGE("time = " << time << " s");
+// }
+
+SCENARIO("") {
+  mt19937 rng{random_device{}()};
+  // random_device rng{};
+  using clock = chrono::high_resolution_clock;
+  uint64_t block1[2]{(rng() << 32) | rng(), (rng() << 32) | rng()};
+  uint64_t block2[2]{(rng() << 32) | rng(), (rng() << 32) | rng()};
+
+  MESSAGE(hex << setfill('0') << setw(16) << block1[0] << block1[1]);
+
+  const auto start = clock::now();
+  for (size_t i = 0; i < 100'000'000; ++i) {
+    // aes128::mix_columns((uint8_t*)block1, (uint8_t*)block2);
+    // aes128::mix_columns((uint8_t*)block2, (uint8_t*)block1);
+    aes128::mix_columns((const uint64_t*)block1, (uint64_t*)block2);
+    aes128::mix_columns((const uint64_t*)block2, (uint64_t*)block1);
+  }
+  const auto end = clock::now();
+  const auto time = chrono::duration<float>(end - start).count();
+
+  MESSAGE(hex << setw(16) << block1[0] << block1[1]);
+  MESSAGE("time = " << time << " s");
 }
 
 SCENARIO("AES-128: ShiftRows Bijectivity") {

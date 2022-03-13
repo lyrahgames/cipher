@@ -95,6 +95,14 @@ struct aes128 {
       12, 9,  6,  3,   //
   };
 
+  struct block_type {
+    // Automatically fulfills 8-byte alignment.
+    uint64_t data[block_size / sizeof(uint64_t)];
+  };
+
+  static_assert(sizeof(block_type) == block_size);
+  static_assert(alignof(block_type) == alignof(uint64_t));
+
   static constexpr auto s_box(uint8_t x) noexcept -> uint8_t {
     return s_box_lut[x];
   }
@@ -104,6 +112,11 @@ struct aes128 {
   }
 
   static constexpr void sub_bytes(uint8_t* data) noexcept {
+    for (size_t i = 0; i < block_size; ++i) data[i] = s_box(data[i]);
+  }
+
+  static constexpr void sub_bytes(block_type& block) noexcept {
+    auto data = reinterpret_cast<uint8_t*>(block.data);
     for (size_t i = 0; i < block_size; ++i) data[i] = s_box(data[i]);
   }
 
@@ -133,6 +146,15 @@ struct aes128 {
   static constexpr auto mul2(uint8_t x) noexcept -> uint8_t {
     constexpr uint8_t mod = 0b0001'1011;
     return (x << 1) ^ ((int8_t(x) >> 7) & mod);
+  }
+
+  static constexpr auto mul2(uint64_t x) noexcept -> uint64_t {
+    constexpr uint64_t mod = 0x1b'1b'1b'1b'1b'1b'1b'1b;
+    uint64_t mask = x & 0x80'80'80'80'80'80'80'80;
+    mask = (mask >> 1) | mask;
+    mask = (mask >> 2) | mask;
+    mask = (mask >> 4) | mask;
+    return ((x << 1) & 0xfe'fe'fe'ff) ^ (mask & mod);
   }
 
   static constexpr auto expand(uint8_t* round_keys) noexcept {
@@ -279,6 +301,34 @@ struct aes128 {
     mix_column(&src[4], &dst[4]);
     mix_column(&src[8], &dst[8]);
     mix_column(&src[12], &dst[12]);
+  }
+
+  static constexpr auto mix_columns(const uint64_t src[2],
+                                    uint64_t dst[2]) noexcept {
+    {
+      const auto x = src[0];
+      const auto x2 = mul2(x);
+      const auto x3 = x2 ^ x;
+      dst[0] =
+          ((x << 8) & 0xffffff00'ffffff00) | ((x >> 24) & 0x000000ff'000000ff);
+      dst[0] ^=
+          ((x << 16) & 0xffff000'ffff0000) | ((x >> 16) & 0x0000ffff'0000ffff);
+      dst[0] ^= x2;
+      dst[0] ^=
+          ((x3 << 24) & 0xff000000'ff000000) | ((x >> 8) & 0x00ffffff'00ffffff);
+    }
+    {
+      const auto x = src[1];
+      const auto x2 = mul2(x);
+      const auto x3 = x2 ^ x;
+      dst[1] =
+          ((x << 8) & 0xffffff00'ffffff00) | ((x >> 24) & 0x000000ff'000000ff);
+      dst[1] ^=
+          ((x << 16) & 0xffff000'ffff0000) | ((x >> 16) & 0x0000ffff'0000ffff);
+      dst[1] ^= x2;
+      dst[1] ^=
+          ((x3 << 24) & 0xff000000'ff000000) | ((x >> 8) & 0x00ffffff'00ffffff);
+    }
   }
 
   static constexpr void inv_mix_column(const uint8_t* src,
