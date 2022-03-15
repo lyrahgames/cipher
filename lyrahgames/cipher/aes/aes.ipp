@@ -1,5 +1,31 @@
 namespace lyrahgames::cipher {
 
+constexpr auto aes128::expand(uint8_t* round_keys) noexcept {
+  uint8_t rc = 1;
+  for (size_t p = block_size; p <= rounds * block_size; p += block_size) {
+    memcpy(&round_keys[p], &round_keys[p - block_size], block_size);
+    round_keys[p + 0] ^= s_box(round_keys[p + 0 - 3]) ^ rc;
+    round_keys[p + 1] ^= s_box(round_keys[p + 1 - 3]);
+    round_keys[p + 2] ^= s_box(round_keys[p + 2 - 3]);
+    round_keys[p + 3] ^= s_box(round_keys[p + 3 - 7]);
+    for (int j = 4; j < block_size; ++j)
+      round_keys[p + j] ^= round_keys[p + j - 4];
+    rc = mul2(rc);
+  }
+}
+
+constexpr auto aes128::expand(const uint8_t* key,
+                              uint8_t* round_keys) noexcept {
+  // for (int i = 0; i < 16; ++i) round_keys[i] = key[i];
+  memcpy(round_keys, key, block_size);
+  expand(round_keys);
+}
+
+constexpr aes128::round_keys_type::round_keys_type(
+    const key_type& key) noexcept {
+  expand((const uint8_t*)key.data, (uint8_t*)data);
+};
+
 constexpr void aes128::encrypt(const uint8_t* keys,  //
                                const uint8_t* src,
                                uint8_t* dst) noexcept {
@@ -82,28 +108,6 @@ constexpr void aes128::add_round_key(const uint8_t* round_key,  //
 constexpr void aes128::add_round_key(const uint8_t* round_key,
                                      uint8_t* data) noexcept {
   for (size_t i = 0; i < block_size; ++i) data[i] ^= round_key[i];
-}
-
-constexpr auto aes128::expand(uint8_t* round_keys) noexcept {
-  uint8_t rc = 1;
-  size_t q = 0;
-  for (size_t p = block_size; p <= rounds * block_size; p += block_size) {
-    memcpy(&round_keys[p], &round_keys[q], block_size);
-    round_keys[p + 0] ^= s_box(round_keys[p + 0 - 3]) ^ rc;
-    round_keys[p + 1] ^= s_box(round_keys[p + 1 - 3]);
-    round_keys[p + 2] ^= s_box(round_keys[p + 2 - 3]);
-    round_keys[p + 3] ^= s_box(round_keys[p + 3 - 7]);
-    for (int j = 4; j < block_size; ++j)
-      round_keys[p + j] ^= round_keys[p + j - 4];
-    rc = mul2(rc);
-    q = p;
-  }
-}
-
-constexpr auto aes128::expand(const uint8_t* key,
-                              uint8_t* round_keys) noexcept {
-  for (int i = 0; i < 16; ++i) round_keys[i] = key[i];
-  expand(round_keys);
 }
 
 constexpr void aes128::shift_rows_and_add_round_key(const uint8_t* round_key,

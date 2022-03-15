@@ -46,7 +46,7 @@ struct aes128 {
       0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16,  //
   };
 
-  static constexpr std::array<uint8_t, 256> inv_s_box_lut{
+  static constexpr uint8_t inv_s_box_lut[256] = {
       0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38,  //
       0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,  //
       0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87,  //
@@ -100,9 +100,24 @@ struct aes128 {
     // Automatically fulfills 8-byte alignment.
     uint64_t data[block_size / sizeof(uint64_t)];
   };
-
   static_assert(sizeof(block_type) == block_size);
   static_assert(alignof(block_type) == alignof(uint64_t));
+
+  struct key_type {
+    constexpr key_type() = default;
+    uint64_t data[key_size / sizeof(uint64_t)];
+  };
+  static_assert(sizeof(key_type) == key_size);
+  static_assert(alignof(key_type) == alignof(uint64_t));
+
+  struct round_keys_type {
+    constexpr round_keys_type(const key_type& key) noexcept;
+    block_type data[rounds + 1];
+  };
+
+  static constexpr auto expand(uint8_t* round_keys) noexcept;
+  static constexpr auto expand(const uint8_t* key,
+                               uint8_t* round_keys) noexcept;
 
   static constexpr void encrypt(const uint8_t* keys,  //
                                 const uint8_t* src,
@@ -131,10 +146,6 @@ struct aes128 {
   static constexpr void add_round_key(const uint8_t* round_key,
                                       uint8_t* data) noexcept;
 
-  static constexpr auto expand(uint8_t* round_keys) noexcept;
-  static constexpr auto expand(const uint8_t* key,
-                               uint8_t* round_keys) noexcept;
-
   static constexpr void shift_rows_and_add_round_key(const uint8_t* round_key,
                                                      const uint8_t* src,
                                                      uint8_t* dst) noexcept;
@@ -147,23 +158,19 @@ struct aes128 {
                                    size_t l) noexcept;
 
   static constexpr void mix_column(const uint8_t* src, uint8_t* col) noexcept;
-
   static constexpr void shift_rows_and_mix_columns(const uint8_t* src,
                                                    uint8_t* dst) noexcept;
 
   static constexpr void mix_columns(const uint8_t* src, uint8_t* dst) noexcept;
-
   static constexpr auto mix_columns(const uint64_t src[2],
                                     uint64_t dst[2]) noexcept;
 
   static constexpr void inv_mix_column(const uint8_t* src,
                                        uint8_t* col) noexcept;
-
   static constexpr void inv_mix_columns(const uint8_t* src,
                                         uint8_t* dst) noexcept;
 
   static constexpr void shift_rows(uint8_t* data) noexcept;
-
   static constexpr void inv_shift_rows(uint8_t* data) noexcept;
 };
 
