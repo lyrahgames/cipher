@@ -2,7 +2,7 @@ libs =
 import libs += lyrahgames-xstd%lib{lyrahgames-xstd}
 import libs += gmpxx%lib{gmpxx}
 
-lib{lyrahgames-cipher}: hxx{**} $libs
+lib{lyrahgames-cipher}: {hxx ixx}{**} $libs
 {
   cxx.export.poptions = "-I$out_root" "-I$src_root"
   cxx.export.libs = $libs
