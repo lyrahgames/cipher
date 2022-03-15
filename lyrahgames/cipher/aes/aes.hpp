@@ -97,6 +97,8 @@ struct aes128 {
 
   struct block_type {
     constexpr block_type() = default;
+    friend constexpr auto operator<=>(const block_type&,
+                                      const block_type&) noexcept = default;
     // Automatically fulfills 8-byte alignment.
     uint64_t data[block_size / sizeof(uint64_t)];
   };
@@ -105,6 +107,8 @@ struct aes128 {
 
   struct key_type {
     constexpr key_type() = default;
+    friend constexpr auto operator<=>(const key_type&,
+                                      const key_type&) noexcept = default;
     uint64_t data[key_size / sizeof(uint64_t)];
   };
   static_assert(sizeof(key_type) == key_size);
@@ -112,20 +116,25 @@ struct aes128 {
 
   struct round_keys_type {
     constexpr round_keys_type(const key_type& key) noexcept;
+    friend constexpr auto operator<=>(
+        const round_keys_type&, const round_keys_type&) noexcept = default;
     block_type data[rounds + 1];
   };
+  static_assert(alignof(round_keys_type) == alignof(block_type));
 
-  static constexpr auto expand(uint8_t* round_keys) noexcept;
-  static constexpr auto expand(const uint8_t* key,
-                               uint8_t* round_keys) noexcept;
+  static constexpr void expand_key(uint8_t* round_keys) noexcept;
+  static constexpr void expand_key(const uint8_t* key,
+                                   uint8_t* round_keys) noexcept;
 
   static constexpr void encrypt(const uint8_t* keys,  //
-                                const uint8_t* src,
-                                uint8_t* dst) noexcept;
+                                const uint8_t* src, uint8_t* dst) noexcept;
+  static void encrypt(const round_keys_type& round_keys,  //
+                      block_type& src, block_type& dst) noexcept;
 
   static constexpr void decrypt(const uint8_t* keys,  //
-                                const uint8_t* src,
-                                uint8_t* dst) noexcept;
+                                const uint8_t* src, uint8_t* dst) noexcept;
+  static void decrypt(const round_keys_type& round_keys,  //
+                      block_type& src, block_type& dst) noexcept;
 
   static constexpr auto s_box(uint8_t x) noexcept -> uint8_t;
   static constexpr auto inv_s_box(uint8_t x) noexcept -> uint8_t;
@@ -133,8 +142,10 @@ struct aes128 {
   static constexpr auto mul2(uint8_t x) noexcept -> uint8_t;
   static constexpr auto mul2(uint64_t x) noexcept -> uint64_t;
 
+  static void sub_bytes(block_type& block) noexcept;
   static constexpr void sub_bytes(uint8_t* data) noexcept;
-  static constexpr void sub_bytes(block_type& block) noexcept;
+
+  static void inv_sub_bytes(block_type& block) noexcept;
   static constexpr void inv_sub_bytes(uint8_t* data) noexcept;
 
   static constexpr auto shift_rows_index(size_t index) noexcept -> size_t;
@@ -145,33 +156,46 @@ struct aes128 {
                                       uint8_t* dst) noexcept;
   static constexpr void add_round_key(const uint8_t* round_key,
                                       uint8_t* data) noexcept;
+  static constexpr void add_round_key(const uint64_t* round_key,
+                                      uint64_t* block) noexcept;
+  static void add_round_key(const block_type& round_key,
+                            block_type& block) noexcept;
 
   static constexpr void shift_rows_and_add_round_key(const uint8_t* round_key,
                                                      const uint8_t* src,
                                                      uint8_t* dst) noexcept;
 
+  static constexpr void shift_rows(const uint8_t* src, uint8_t* dst) noexcept;
+  static void shift_rows(const block_type& src, block_type& dst) noexcept;
+
+  static constexpr void inv_shift_rows(const uint8_t* src,
+                                       uint8_t* dst) noexcept;
+  static void inv_shift_rows(const block_type& src, block_type& dst) noexcept;
+
   static constexpr void mix_column(const uint8_t* src,
                                    uint8_t* col,  //
                                    size_t i,
                                    size_t j,  //
-                                   size_t k,
-                                   size_t l) noexcept;
+                                   size_t k, size_t l) noexcept;
 
   static constexpr void mix_column(const uint8_t* src, uint8_t* col) noexcept;
   static constexpr void shift_rows_and_mix_columns(const uint8_t* src,
                                                    uint8_t* dst) noexcept;
 
   static constexpr void mix_columns(const uint8_t* src, uint8_t* dst) noexcept;
+  static constexpr auto mix_columns(const uint64_t x) noexcept -> uint64_t;
   static constexpr auto mix_columns(const uint64_t src[2],
                                     uint64_t dst[2]) noexcept;
+  static void mix_columns(const block_type& src, block_type& dst) noexcept;
 
   static constexpr void inv_mix_column(const uint8_t* src,
                                        uint8_t* col) noexcept;
   static constexpr void inv_mix_columns(const uint8_t* src,
                                         uint8_t* dst) noexcept;
-
-  static constexpr void shift_rows(uint8_t* data) noexcept;
-  static constexpr void inv_shift_rows(uint8_t* data) noexcept;
+  static constexpr auto inv_mix_columns(const uint64_t x) noexcept -> uint64_t;
+  static constexpr void inv_mix_columns(const uint64_t src[2],
+                                        uint64_t dst[2]) noexcept;
+  static void inv_mix_columns(const block_type& src, block_type& dst) noexcept;
 };
 
 }  // namespace lyrahgames::cipher

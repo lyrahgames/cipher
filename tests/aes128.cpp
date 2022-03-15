@@ -58,21 +58,75 @@ SCENARIO("") {
 }
 
 SCENARIO("AES-128: ShiftRows Bijectivity") {
-  for (size_t i = 0; i < 16; ++i) {
+  for (size_t i = 0; i < aes128::block_size; ++i) {
     CHECK(aes128::inv_shift_rows_index(aes128::shift_rows_index(i)) == i);
     CHECK(aes128::shift_rows_index(aes128::inv_shift_rows_index(i)) == i);
+  }
+
+  mt19937 rng{random_device{}()};
+  aes128::block_type a{}, b{}, c{};
+
+  constexpr size_t n = 1'000'000;
+  for (size_t i = 0; i < n; ++i) {
+    a.data[0] = (rng() << 32) | rng();
+    a.data[1] = (rng() << 32) | rng();
+
+    aes128::shift_rows(a, b);
+    aes128::inv_shift_rows(b, c);
+
+    CHECK(a == c);
+  }
+}
+
+SCENARIO("AES-128: Rijndael's Galois Field Multiplication by 2") {
+  mt19937 rng{random_device{}()};
+
+  constexpr size_t n = 1'000'000;
+  for (size_t i = 0; i < n; ++i) {
+    uint64_t x = (rng() << 32) | rng();
+    const auto y = aes128::mul2(x);
+    const auto z = (uint64_t(aes128::mul2(uint8_t(x >> 56))) << 56) |
+                   (uint64_t(aes128::mul2(uint8_t(x >> 48))) << 48) |
+                   (uint64_t(aes128::mul2(uint8_t(x >> 40))) << 40) |
+                   (uint64_t(aes128::mul2(uint8_t(x >> 32))) << 32) |
+                   (uint64_t(aes128::mul2(uint8_t(x >> 24))) << 24) |
+                   (uint64_t(aes128::mul2(uint8_t(x >> 16))) << 16) |
+                   (uint64_t(aes128::mul2(uint8_t(x >> 8))) << 8) |
+                   uint64_t(aes128::mul2(uint8_t(x)));
+
+    // MESSAGE(hex << setw(16) << setfill('0') << y);
+    // MESSAGE(hex << setw(16) << setfill('0') << z);
+    REQUIRE(y == z);
   }
 }
 
 SCENARIO("AES-128: MixColumns Bijectivity") {
   mt19937 rng{random_device{}()};
-  uint8_t src[16], mix[16], inv[16];
+  // uint8_t src[16], mix[16], inv[16];
+  // constexpr size_t n = 1'000'000;
+  // for (size_t i = 0; i < n; ++i) {
+  //   for (size_t j = 0; j < 16; ++j) src[j] = rng();
+  //   aes128::mix_columns(src, mix);
+  //   aes128::inv_mix_columns(mix, inv);
+  //   for (size_t j = 0; j < 16; ++j) CHECK(inv[j] == src[j]);
+  // }
+
+  aes128::block_type a{}, b{}, c{};
+
   constexpr size_t n = 1'000'000;
   for (size_t i = 0; i < n; ++i) {
-    for (size_t j = 0; j < 16; ++j) src[j] = rng();
-    aes128::mix_columns(src, mix);
-    aes128::inv_mix_columns(mix, inv);
-    for (size_t j = 0; j < 16; ++j) CHECK(inv[j] == src[j]);
+    a.data[0] = (rng() << 32) | rng();
+    a.data[1] = (rng() << 32) | rng();
+
+    aes128::mix_columns(a, b);
+    // aes128::mix_columns((const uint8_t*)a.data, (uint8_t*)c.data);
+    aes128::inv_mix_columns(b, c);
+
+    // MESSAGE(hex << setw(16) << setfill('0') << b.data[0] << ' ' <<
+    // b.data[1]); MESSAGE(hex << setw(16) << setfill('0') << c.data[0] << ' '
+    // << c.data[1]);
+
+    REQUIRE(a == c);
   }
 }
 
@@ -113,7 +167,7 @@ SCENARIO("") {
   };
 
   uint8_t keys[11 * 16];
-  aes128::expand(round_keys, keys);
+  aes128::expand_key(round_keys, keys);
   for (int i = 0; i < 11 * 16; ++i) {
     CAPTURE(i);
     REQUIRE(round_keys[i] == keys[i]);
