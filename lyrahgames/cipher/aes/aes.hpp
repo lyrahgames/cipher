@@ -96,7 +96,33 @@ struct aes128 {
   };
 
   struct block_type {
-    constexpr block_type() = default;
+    constexpr block_type() noexcept = default;
+
+    constexpr block_type(uint8_t a0,
+                         uint8_t a1,
+                         uint8_t a2,
+                         uint8_t a3,
+                         uint8_t b0,
+                         uint8_t b1,
+                         uint8_t b2,
+                         uint8_t b3,
+                         uint8_t c0,
+                         uint8_t c1,
+                         uint8_t c2,
+                         uint8_t c3,
+                         uint8_t d0,
+                         uint8_t d1,
+                         uint8_t d2,
+                         uint8_t d3) noexcept
+        : data{uint64_t(a0) | (uint64_t(a1) << 8) | (uint64_t(a2) << 16) |
+                   (uint64_t(a3) << 24) | (uint64_t(b0) << 32) |
+                   (uint64_t(b1) << 40) | (uint64_t(b2) << 48) |
+                   (uint64_t(b3) << 56),
+               uint64_t(c0) | (uint64_t(c1) << 8) | (uint64_t(c2) << 16) |
+                   (uint64_t(c3) << 24) | (uint64_t(d0) << 32) |
+                   (uint64_t(d1) << 40) | (uint64_t(d2) << 48) |
+                   (uint64_t(d3) << 56)} {}
+
     friend constexpr auto operator<=>(const block_type&,
                                       const block_type&) noexcept = default;
     // Automatically fulfills 8-byte alignment.
@@ -106,7 +132,31 @@ struct aes128 {
   static_assert(alignof(block_type) == alignof(uint64_t));
 
   struct key_type {
-    constexpr key_type() = default;
+    constexpr key_type() noexcept = default;
+    constexpr key_type(uint8_t a0,
+                       uint8_t a1,
+                       uint8_t a2,
+                       uint8_t a3,
+                       uint8_t b0,
+                       uint8_t b1,
+                       uint8_t b2,
+                       uint8_t b3,
+                       uint8_t c0,
+                       uint8_t c1,
+                       uint8_t c2,
+                       uint8_t c3,
+                       uint8_t d0,
+                       uint8_t d1,
+                       uint8_t d2,
+                       uint8_t d3) noexcept
+        : data{uint64_t(a0) | (uint64_t(a1) << 8) | (uint64_t(a2) << 16) |
+                   (uint64_t(a3) << 24) | (uint64_t(b0) << 32) |
+                   (uint64_t(b1) << 40) | (uint64_t(b2) << 48) |
+                   (uint64_t(b3) << 56),
+               uint64_t(c0) | (uint64_t(c1) << 8) | (uint64_t(c2) << 16) |
+                   (uint64_t(c3) << 24) | (uint64_t(d0) << 32) |
+                   (uint64_t(d1) << 40) | (uint64_t(d2) << 48) |
+                   (uint64_t(d3) << 56)} {}
     friend constexpr auto operator<=>(const key_type&,
                                       const key_type&) noexcept = default;
     uint64_t data[key_size / sizeof(uint64_t)];
@@ -116,8 +166,9 @@ struct aes128 {
 
   struct round_keys_type {
     constexpr round_keys_type(const key_type& key) noexcept;
-    friend constexpr auto operator<=>(
-        const round_keys_type&, const round_keys_type&) noexcept = default;
+    friend constexpr auto operator<=>(const round_keys_type&,
+                                      const round_keys_type&) noexcept =
+        default;
     block_type data[rounds + 1];
   };
   static_assert(alignof(round_keys_type) == alignof(block_type));
@@ -127,14 +178,18 @@ struct aes128 {
                                    uint8_t* round_keys) noexcept;
 
   static constexpr void encrypt(const uint8_t* keys,  //
-                                const uint8_t* src, uint8_t* dst) noexcept;
+                                const uint8_t* src,
+                                uint8_t* dst) noexcept;
   static void encrypt(const round_keys_type& round_keys,  //
-                      block_type& src, block_type& dst) noexcept;
+                      block_type& src,
+                      block_type& dst) noexcept;
 
   static constexpr void decrypt(const uint8_t* keys,  //
-                                const uint8_t* src, uint8_t* dst) noexcept;
+                                const uint8_t* src,
+                                uint8_t* dst) noexcept;
   static void decrypt(const round_keys_type& round_keys,  //
-                      block_type& src, block_type& dst) noexcept;
+                      block_type& src,
+                      block_type& dst) noexcept;
 
   static constexpr auto s_box(uint8_t x) noexcept -> uint8_t;
   static constexpr auto inv_s_box(uint8_t x) noexcept -> uint8_t;
@@ -176,7 +231,8 @@ struct aes128 {
                                    uint8_t* col,  //
                                    size_t i,
                                    size_t j,  //
-                                   size_t k, size_t l) noexcept;
+                                   size_t k,
+                                   size_t l) noexcept;
 
   static constexpr void mix_column(const uint8_t* src, uint8_t* col) noexcept;
   static constexpr void shift_rows_and_mix_columns(const uint8_t* src,
@@ -186,6 +242,7 @@ struct aes128 {
   static constexpr auto mix_columns(const uint64_t x) noexcept -> uint64_t;
   static constexpr auto mix_columns(const uint64_t src[2],
                                     uint64_t dst[2]) noexcept;
+  // src and dst have to be distinct blocks.
   static void mix_columns(const block_type& src, block_type& dst) noexcept;
 
   static constexpr void inv_mix_column(const uint8_t* src,
