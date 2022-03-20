@@ -10,12 +10,12 @@
 using namespace std;
 using namespace lyrahgames::cipher;
 
-SCENARIO("AES-128: S-Box Bijectivity") {
-  for (size_t i = 0; i < 256; ++i) {
-    CHECK(aes128::inv_s_box(aes128::s_box(i)) == i);
-    CHECK(aes128::s_box(aes128::inv_s_box(i)) == i);
-  }
-}
+// SCENARIO("AES-128: S-Box Bijectivity") {
+//   for (size_t i = 0; i < 256; ++i) {
+//     CHECK(aes128::inv_s_box(aes128::s_box(i)) == i);
+//     CHECK(aes128::s_box(aes128::inv_s_box(i)) == i);
+//   }
+// }
 
 // SCENARIO("") {
 //   // mt19937 rng{random_device{}()};
@@ -34,147 +34,175 @@ SCENARIO("AES-128: S-Box Bijectivity") {
 //   MESSAGE("time = " << time << " s");
 // }
 
-SCENARIO("") {
-  mt19937 rng{random_device{}()};
-  // random_device rng{};
-  using clock = chrono::high_resolution_clock;
-  uint64_t block1[2]{(rng() << 32) | rng(), (rng() << 32) | rng()};
-  uint64_t block2[2]{(rng() << 32) | rng(), (rng() << 32) | rng()};
+// SCENARIO("") {
+//   mt19937 rng{random_device{}()};
+//   // random_device rng{};
+//   using clock = chrono::high_resolution_clock;
+//   uint64_t block1[2]{(rng() << 32) | rng(), (rng() << 32) | rng()};
+//   uint64_t block2[2]{(rng() << 32) | rng(), (rng() << 32) | rng()};
 
-  MESSAGE(hex << setfill('0') << setw(16) << block1[0] << block1[1]);
+//   MESSAGE(hex << setfill('0') << setw(16) << block1[0] << block1[1]);
 
-  const auto start = clock::now();
-  for (size_t i = 0; i < 100'000'000; ++i) {
-    // aes128::mix_columns((uint8_t*)block1, (uint8_t*)block2);
-    // aes128::mix_columns((uint8_t*)block2, (uint8_t*)block1);
-    aes128::mix_columns((const uint64_t*)block1, (uint64_t*)block2);
-    aes128::mix_columns((const uint64_t*)block2, (uint64_t*)block1);
+//   const auto start = clock::now();
+//   for (size_t i = 0; i < 100'000'000; ++i) {
+//     // aes128::mix_columns((uint8_t*)block1, (uint8_t*)block2);
+//     // aes128::mix_columns((uint8_t*)block2, (uint8_t*)block1);
+//     aes128::mix_columns((const uint64_t*)block1, (uint64_t*)block2);
+//     aes128::mix_columns((const uint64_t*)block2, (uint64_t*)block1);
+//   }
+//   const auto end = clock::now();
+//   const auto time = chrono::duration<float>(end - start).count();
+
+//   MESSAGE(hex << setw(16) << block1[0] << block1[1]);
+//   MESSAGE("time = " << time << " s");
+// }
+
+// SCENARIO("AES-128: ShiftRows Bijectivity") {
+//   for (size_t i = 0; i < aes128::block_size; ++i) {
+//     CHECK(aes128::inv_shift_rows_index(aes128::shift_rows_index(i)) == i);
+//     CHECK(aes128::shift_rows_index(aes128::inv_shift_rows_index(i)) == i);
+//   }
+
+//   mt19937 rng{random_device{}()};
+//   aes128::block_type a{}, b{}, c{};
+
+//   constexpr size_t n = 100'000;
+//   for (size_t i = 0; i < n; ++i) {
+//     a.data[0] = (rng() << 32) | rng();
+//     a.data[1] = (rng() << 32) | rng();
+
+//     aes128::shift_rows(a, b);
+//     aes128::inv_shift_rows(b, c);
+
+//     REQUIRE(a == c);
+//   }
+// }
+
+// SCENARIO("AES-128: MixColumns Bijectivity") {
+//   mt19937 rng{random_device{}()};
+//   // uint8_t src[16], mix[16], inv[16];
+//   // constexpr size_t n = 1'000'000;
+//   // for (size_t i = 0; i < n; ++i) {
+//   //   for (size_t j = 0; j < 16; ++j) src[j] = rng();
+//   //   aes128::mix_columns(src, mix);
+//   //   aes128::inv_mix_columns(mix, inv);
+//   //   for (size_t j = 0; j < 16; ++j) CHECK(inv[j] == src[j]);
+//   // }
+
+//   aes128::block_type a{}, b{}, c{};
+
+//   constexpr size_t n = 1'000'000;
+//   for (size_t i = 0; i < n; ++i) {
+//     a.data[0] = (rng() << 32) | rng();
+//     a.data[1] = (rng() << 32) | rng();
+
+//     aes128::mix_columns(a, b);
+//     // aes128::mix_columns((const uint8_t*)a.data, (uint8_t*)c.data);
+//     aes128::inv_mix_columns(b, c);
+
+//     // MESSAGE(hex << setw(16) << setfill('0') << b.data[0] << ' ' <<
+//     // b.data[1]); MESSAGE(hex << setw(16) << setfill('0') << c.data[0] << '
+//     '
+//     // << c.data[1]);
+
+//     REQUIRE(a == c);
+//   }
+// }
+
+SCENARIO(
+    "AES-128 Key Expansion Correctness"
+    " by Using NIST FIPS PUB 197 Advanced Encryption Standard (AES)"
+    " Examples Appendix A.1") {
+  const aes128::key_type key{0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,  //
+                             0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c};
+  const aes128::round_keys_type round_keys{key};
+  for (int i = 0; const auto& round_key : {
+                      aes128::block_type                                 //
+                      {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,   //
+                       0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c},  //
+                      {0xa0, 0xfa, 0xfe, 0x17, 0x88, 0x54, 0x2c, 0xb1,   //
+                       0x23, 0xa3, 0x39, 0x39, 0x2a, 0x6c, 0x76, 0x05},  //
+                      {0xf2, 0xc2, 0x95, 0xf2, 0x7a, 0x96, 0xb9, 0x43,   //
+                       0x59, 0x35, 0x80, 0x7a, 0x73, 0x59, 0xf6, 0x7f},  //
+                      {0x3d, 0x80, 0x47, 0x7d, 0x47, 0x16, 0xfe, 0x3e,   //
+                       0x1e, 0x23, 0x7e, 0x44, 0x6d, 0x7a, 0x88, 0x3b},  //
+                      {0xef, 0x44, 0xa5, 0x41, 0xa8, 0x52, 0x5b, 0x7f,   //
+                       0xb6, 0x71, 0x25, 0x3b, 0xdb, 0x0b, 0xad, 0x00},  //
+                      {0xd4, 0xd1, 0xc6, 0xf8, 0x7c, 0x83, 0x9d, 0x87,   //
+                       0xca, 0xf2, 0xb8, 0xbc, 0x11, 0xf9, 0x15, 0xbc},  //
+                      {0x6d, 0x88, 0xa3, 0x7a, 0x11, 0x0b, 0x3e, 0xfd,   //
+                       0xdb, 0xf9, 0x86, 0x41, 0xca, 0x00, 0x93, 0xfd},  //
+                      {0x4e, 0x54, 0xf7, 0x0e, 0x5f, 0x5f, 0xc9, 0xf3,   //
+                       0x84, 0xa6, 0x4f, 0xb2, 0x4e, 0xa6, 0xdc, 0x4f},  //
+                      {0xea, 0xd2, 0x73, 0x21, 0xb5, 0x8d, 0xba, 0xd2,   //
+                       0x31, 0x2b, 0xf5, 0x60, 0x7f, 0x8d, 0x29, 0x2f},  //
+                      {0xac, 0x77, 0x66, 0xf3, 0x19, 0xfa, 0xdc, 0x21,   //
+                       0x28, 0xd1, 0x29, 0x41, 0x57, 0x5c, 0x00, 0x6e},  //
+                      {0xd0, 0x14, 0xf9, 0xa8, 0xc9, 0xee, 0x25, 0x89,   //
+                       0xe1, 0x3f, 0x0c, 0xc8, 0xb6, 0x63, 0x0c, 0xa6},  //
+                  }) {
+    CHECK(round_keys[i] == round_key);
+    ++i;
   }
-  const auto end = clock::now();
-  const auto time = chrono::duration<float>(end - start).count();
-
-  MESSAGE(hex << setw(16) << block1[0] << block1[1]);
-  MESSAGE("time = " << time << " s");
 }
 
-SCENARIO("AES-128: ShiftRows Bijectivity") {
-  for (size_t i = 0; i < aes128::block_size; ++i) {
-    CHECK(aes128::inv_shift_rows_index(aes128::shift_rows_index(i)) == i);
-    CHECK(aes128::shift_rows_index(aes128::inv_shift_rows_index(i)) == i);
-  }
+// SCENARIO(
+//     "AES-128 MixColumns Correctness"
+//     " by Using NIST FIPS PUB 197 Advanced Encryption Standard (AES)"
+//     " Examples Appendix B") {
+//   aes128::block_type a, b;
+//   for (const auto& [src, dst] : {
+//            pair<aes128::block_type, aes128::block_type>       //
+//            {{0xd4, 0xbf, 0x5d, 0x30, 0xe0, 0xb4, 0x52, 0xae,  //
+//              0xb8, 0x41, 0x11, 0xf1, 0x1e, 0x27, 0x98, 0xe5},
+//             {0x04, 0x66, 0x81, 0xe5, 0xe0, 0xcb, 0x19, 0x9a,  //
+//              0x48, 0xf8, 0xd3, 0x7a, 0x28, 0x06, 0x26, 0x4c}},
 
-  mt19937 rng{random_device{}()};
-  aes128::block_type a{}, b{}, c{};
+//            {{0x49, 0xdb, 0x87, 0x3b, 0x45, 0x39, 0x53, 0x89,  //
+//              0x7f, 0x02, 0xd2, 0xf1, 0x77, 0xde, 0x96, 0x1a},
+//             {0x58, 0x4d, 0xca, 0xf1, 0x1b, 0x4b, 0x5a, 0xac,  //
+//              0xdb, 0xe7, 0xca, 0xa8, 0x1b, 0x6b, 0xb0, 0xe5}},
+//        }) {
+//     aes128::mix_columns(src, a);
+//     aes128::inv_mix_columns(dst, b);
+//     CHECK(dst == a);
+//     CHECK(src == b);
+//   }
+// }
 
-  constexpr size_t n = 1'000'000;
-  for (size_t i = 0; i < n; ++i) {
-    a.data[0] = (rng() << 32) | rng();
-    a.data[1] = (rng() << 32) | rng();
+SCENARIO(
+    "AES-128 Correctness"
+    " by Using NIST FIPS PUB 197 Advanced Encryption Standard (AES)"
+    " Example Appendix B") {
+  const aes128::key_type key{0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,  //
+                             0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c};
+  const aes128::block_type src{
+      0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d,  //
+      0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34};
+  const aes128::block_type dst{
+      0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb,  //
+      0xdc, 0x11, 0x85, 0x97, 0x19, 0x6a, 0x0b, 0x32};
 
-    aes128::shift_rows(a, b);
-    aes128::inv_shift_rows(b, c);
+  aes128::block_type a, b;
 
-    CHECK(a == c);
-  }
+  aes128 cipher{};
+
+  cipher.encrypt(key, src, a);
+  cipher.decrypt(key, dst, b);
+
+  CHECK(dst == a);
+  CHECK(src == b);
 }
 
-SCENARIO("AES-128: Rijndael's Galois Field Multiplication by 2") {
-  mt19937 rng{random_device{}()};
+SCENARIO("AES-128 Correctness by Unknown Data") {
+  const aes128::key_type key{0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,  //
+                             0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c};
+  const auto round_keys = aes128::expansion(key);
+  aes128::block_type check;
+  aes128 cipher{};
 
-  constexpr size_t n = 1'000'000;
-  for (size_t i = 0; i < n; ++i) {
-    uint64_t x = (rng() << 32) | rng();
-    const auto y = aes128::mul2(x);
-    const auto z = (uint64_t(aes128::mul2(uint8_t(x >> 56))) << 56) |
-                   (uint64_t(aes128::mul2(uint8_t(x >> 48))) << 48) |
-                   (uint64_t(aes128::mul2(uint8_t(x >> 40))) << 40) |
-                   (uint64_t(aes128::mul2(uint8_t(x >> 32))) << 32) |
-                   (uint64_t(aes128::mul2(uint8_t(x >> 24))) << 24) |
-                   (uint64_t(aes128::mul2(uint8_t(x >> 16))) << 16) |
-                   (uint64_t(aes128::mul2(uint8_t(x >> 8))) << 8) |
-                   uint64_t(aes128::mul2(uint8_t(x)));
-
-    // MESSAGE(hex << setw(16) << setfill('0') << y);
-    // MESSAGE(hex << setw(16) << setfill('0') << z);
-    REQUIRE(y == z);
-  }
-}
-
-SCENARIO("AES-128: MixColumns Bijectivity") {
-  mt19937 rng{random_device{}()};
-  // uint8_t src[16], mix[16], inv[16];
-  // constexpr size_t n = 1'000'000;
-  // for (size_t i = 0; i < n; ++i) {
-  //   for (size_t j = 0; j < 16; ++j) src[j] = rng();
-  //   aes128::mix_columns(src, mix);
-  //   aes128::inv_mix_columns(mix, inv);
-  //   for (size_t j = 0; j < 16; ++j) CHECK(inv[j] == src[j]);
-  // }
-
-  aes128::block_type a{}, b{}, c{};
-
-  constexpr size_t n = 1'000'000;
-  for (size_t i = 0; i < n; ++i) {
-    a.data[0] = (rng() << 32) | rng();
-    a.data[1] = (rng() << 32) | rng();
-
-    aes128::mix_columns(a, b);
-    // aes128::mix_columns((const uint8_t*)a.data, (uint8_t*)c.data);
-    aes128::inv_mix_columns(b, c);
-
-    // MESSAGE(hex << setw(16) << setfill('0') << b.data[0] << ' ' <<
-    // b.data[1]); MESSAGE(hex << setw(16) << setfill('0') << c.data[0] << ' '
-    // << c.data[1]);
-
-    REQUIRE(a == c);
-  }
-}
-
-SCENARIO("") {
-  uint8_t round_keys[] = {
-      0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,  //
-      0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c,  //
-
-      0xa0, 0xfa, 0xfe, 0x17, 0x88, 0x54, 0x2c, 0xb1,  //
-      0x23, 0xa3, 0x39, 0x39, 0x2a, 0x6c, 0x76, 0x05,  //
-
-      0xf2, 0xc2, 0x95, 0xf2, 0x7a, 0x96, 0xb9, 0x43,  //
-      0x59, 0x35, 0x80, 0x7a, 0x73, 0x59, 0xf6, 0x7f,  //
-
-      0x3d, 0x80, 0x47, 0x7d, 0x47, 0x16, 0xfe, 0x3e,  //
-      0x1e, 0x23, 0x7e, 0x44, 0x6d, 0x7a, 0x88, 0x3b,  //
-
-      0xef, 0x44, 0xa5, 0x41, 0xa8, 0x52, 0x5b, 0x7f,  //
-      0xb6, 0x71, 0x25, 0x3b, 0xdb, 0x0b, 0xad, 0x00,  //
-
-      0xd4, 0xd1, 0xc6, 0xf8, 0x7c, 0x83, 0x9d, 0x87,  //
-      0xca, 0xf2, 0xb8, 0xbc, 0x11, 0xf9, 0x15, 0xbc,  //
-
-      0x6d, 0x88, 0xa3, 0x7a, 0x11, 0x0b, 0x3e, 0xfd,  //
-      0xdb, 0xf9, 0x86, 0x41, 0xca, 0x00, 0x93, 0xfd,  //
-
-      0x4e, 0x54, 0xf7, 0x0e, 0x5f, 0x5f, 0xc9, 0xf3,  //
-      0x84, 0xa6, 0x4f, 0xb2, 0x4e, 0xa6, 0xdc, 0x4f,  //
-
-      0xea, 0xd2, 0x73, 0x21, 0xb5, 0x8d, 0xba, 0xd2,  //
-      0x31, 0x2b, 0xf5, 0x60, 0x7f, 0x8d, 0x29, 0x2f,  //
-
-      0xac, 0x77, 0x66, 0xf3, 0x19, 0xfa, 0xdc, 0x21,  //
-      0x28, 0xd1, 0x29, 0x41, 0x57, 0x5c, 0x00, 0x6e,  //
-
-      0xd0, 0x14, 0xf9, 0xa8, 0xc9, 0xee, 0x25, 0x89,  //
-      0xe1, 0x3f, 0x0c, 0xc8, 0xb6, 0x63, 0x0c, 0xa6,  //
-  };
-
-  uint8_t keys[11 * 16];
-  aes128::expand_key(round_keys, keys);
-  for (int i = 0; i < 11 * 16; ++i) {
-    CAPTURE(i);
-    REQUIRE(round_keys[i] == keys[i]);
-  }
-
-  for (auto& [plain, crypt] : {
-           pair<array<uint8_t, 16>, array<uint8_t, 16>>       //
+  for (const auto& [plain, crypt] : {
+           pair<aes128::block_type, aes128::block_type>       //
            {{0x5c, 0xf6, 0xee, 0x79, 0x2c, 0xdf, 0x05, 0xe1,  //
              0xba, 0x2b, 0x63, 0x25, 0xc4, 0x1a, 0x5f, 0x10},
             {0xe2, 0x48, 0x89, 0xba, 0xaa, 0xdd, 0x90, 0x6b,  //
@@ -225,94 +253,11 @@ SCENARIO("") {
             {0xb4, 0x7b, 0x46, 0xe5, 0xf1, 0x30, 0x32, 0xe5,  //
              0xcd, 0x9a, 0x60, 0xcd, 0x67, 0xd1, 0x73, 0x3b}},
        }) {
-    uint8_t text[16];
-    // for (int i = 0; i < 16; ++i) text[i] = plain[i];
-    aes128::encrypt(round_keys, plain.data(), text);
-    for (int i = 0; i < 16; ++i) CHECK(text[i] == crypt[i]);
-    aes128::decrypt(round_keys, text, text);
-    for (int i = 0; i < 16; ++i) CHECK(text[i] == plain[i]);
+    cipher.encrypt(round_keys, plain, check);
+    REQUIRE(check == crypt);
+    cipher.decrypt(round_keys, crypt, check);
+    REQUIRE(check == plain);
   }
-}
-
-SCENARIO(
-    "AES-128 Key Expansion Correctness"
-    " by Using NIST FIPS PUB 197 Advanced Encryption Standard (AES)"
-    " Examples Appendix A.1") {
-  const aes128::key_type key{0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,  //
-                             0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c};
-  const aes128::round_keys_type round_keys{key};
-  for (int i = 0; const auto& round_key : {
-                      aes128::block_type                                 //
-                      {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,   //
-                       0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c},  //
-                      {0xa0, 0xfa, 0xfe, 0x17, 0x88, 0x54, 0x2c, 0xb1,   //
-                       0x23, 0xa3, 0x39, 0x39, 0x2a, 0x6c, 0x76, 0x05},  //
-                      {0xf2, 0xc2, 0x95, 0xf2, 0x7a, 0x96, 0xb9, 0x43,   //
-                       0x59, 0x35, 0x80, 0x7a, 0x73, 0x59, 0xf6, 0x7f},  //
-                      {0x3d, 0x80, 0x47, 0x7d, 0x47, 0x16, 0xfe, 0x3e,   //
-                       0x1e, 0x23, 0x7e, 0x44, 0x6d, 0x7a, 0x88, 0x3b},  //
-                      {0xef, 0x44, 0xa5, 0x41, 0xa8, 0x52, 0x5b, 0x7f,   //
-                       0xb6, 0x71, 0x25, 0x3b, 0xdb, 0x0b, 0xad, 0x00},  //
-                      {0xd4, 0xd1, 0xc6, 0xf8, 0x7c, 0x83, 0x9d, 0x87,   //
-                       0xca, 0xf2, 0xb8, 0xbc, 0x11, 0xf9, 0x15, 0xbc},  //
-                      {0x6d, 0x88, 0xa3, 0x7a, 0x11, 0x0b, 0x3e, 0xfd,   //
-                       0xdb, 0xf9, 0x86, 0x41, 0xca, 0x00, 0x93, 0xfd},  //
-                      {0x4e, 0x54, 0xf7, 0x0e, 0x5f, 0x5f, 0xc9, 0xf3,   //
-                       0x84, 0xa6, 0x4f, 0xb2, 0x4e, 0xa6, 0xdc, 0x4f},  //
-                      {0xea, 0xd2, 0x73, 0x21, 0xb5, 0x8d, 0xba, 0xd2,   //
-                       0x31, 0x2b, 0xf5, 0x60, 0x7f, 0x8d, 0x29, 0x2f},  //
-                      {0xac, 0x77, 0x66, 0xf3, 0x19, 0xfa, 0xdc, 0x21,   //
-                       0x28, 0xd1, 0x29, 0x41, 0x57, 0x5c, 0x00, 0x6e},  //
-                      {0xd0, 0x14, 0xf9, 0xa8, 0xc9, 0xee, 0x25, 0x89,   //
-                       0xe1, 0x3f, 0x0c, 0xc8, 0xb6, 0x63, 0x0c, 0xa6},  //
-                  }) {
-    CHECK(round_keys[i] == round_key);
-    ++i;
-  }
-}
-
-SCENARIO(
-    "AES-128 MixColumns Correctness"
-    " by Using NIST FIPS PUB 197 Advanced Encryption Standard (AES)"
-    " Examples Appendix B") {
-  aes128::block_type a, b;
-  for (const auto& [src, dst] : {
-           pair<aes128::block_type, aes128::block_type>       //
-           {{0xd4, 0xbf, 0x5d, 0x30, 0xe0, 0xb4, 0x52, 0xae,  //
-             0xb8, 0x41, 0x11, 0xf1, 0x1e, 0x27, 0x98, 0xe5},
-            {0x04, 0x66, 0x81, 0xe5, 0xe0, 0xcb, 0x19, 0x9a,  //
-             0x48, 0xf8, 0xd3, 0x7a, 0x28, 0x06, 0x26, 0x4c}},
-
-           {{0x49, 0xdb, 0x87, 0x3b, 0x45, 0x39, 0x53, 0x89,  //
-             0x7f, 0x02, 0xd2, 0xf1, 0x77, 0xde, 0x96, 0x1a},
-            {0x58, 0x4d, 0xca, 0xf1, 0x1b, 0x4b, 0x5a, 0xac,  //
-             0xdb, 0xe7, 0xca, 0xa8, 0x1b, 0x6b, 0xb0, 0xe5}},
-       }) {
-    aes128::mix_columns(src, a);
-    aes128::inv_mix_columns(dst, b);
-    CHECK(dst == a);
-    CHECK(src == b);
-  }
-}
-
-SCENARIO("AES-128 NIST FIPS Example Appendix B") {
-  const aes128::key_type key{0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,  //
-                             0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c};
-  const aes128::block_type src{
-      0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d,  //
-      0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34};
-  const aes128::block_type dst{
-      0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb,  //
-      0xdc, 0x11, 0x85, 0x97, 0x19, 0x6a, 0x0b, 0x32};
-
-  aes128::block_type a, b;
-
-  aes128 cipher{};
-  cipher.encrypt(key, src, a);
-  cipher.decrypt(key, dst, b);
-
-  CHECK(dst == a);
-  CHECK(src == b);
 }
 
 SCENARIO("AES-128 In-Place and Function-Style Interface Correctness") {
