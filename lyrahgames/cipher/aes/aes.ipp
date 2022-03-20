@@ -27,7 +27,8 @@ constexpr aes128::round_keys_type::round_keys_type(
 };
 
 constexpr void aes128::encrypt(const uint8_t* keys,  //
-                               const uint8_t* src, uint8_t* dst) noexcept {
+                               const uint8_t* src,
+                               uint8_t* dst) noexcept {
   uint8_t tmp[block_size];
   add_round_key(keys, src, tmp);
   for (size_t i = 1; i < rounds; ++i) {
@@ -39,22 +40,52 @@ constexpr void aes128::encrypt(const uint8_t* keys,  //
   shift_rows_and_add_round_key(&keys[block_size * rounds], tmp, dst);
 }
 
-inline void aes128::encrypt(const round_keys_type& round_keys,  //
-                            block_type& src, block_type& dst) noexcept {
-  add_round_key(round_keys.data[0], src);
+// inline void aes128::encrypt(const round_keys_type& round_keys,  //
+//                             block_type& src,
+//                             block_type& dst) noexcept {
+//   add_round_key(round_keys.data[0], src);
+//   for (size_t i = 1; i < rounds; ++i) {
+//     sub_bytes(src);
+//     shift_rows(src, dst);
+//     mix_columns(dst, src);
+//     add_round_key(round_keys.data[i], src);
+//   }
+//   sub_bytes(src);
+//   shift_rows(src, dst);
+//   add_round_key(round_keys.data[rounds], dst);
+// }
+
+inline void aes128::encrypt(const round_keys_type& round_keys,
+                            const block_type& src,
+                            block_type& dst) noexcept {
+  buffer = src;
+  add_round_key(round_keys.data[0], buffer);
   for (size_t i = 1; i < rounds; ++i) {
-    sub_bytes(src);
-    shift_rows(src, dst);
-    mix_columns(dst, src);
-    add_round_key(round_keys.data[i], src);
+    sub_bytes(buffer);
+    shift_rows(buffer, dst);
+    mix_columns(dst, buffer);
+    add_round_key(round_keys.data[i], buffer);
   }
-  sub_bytes(src);
-  shift_rows(src, dst);
+  sub_bytes(buffer);
+  shift_rows(buffer, dst);
   add_round_key(round_keys.data[rounds], dst);
 }
 
+inline void aes128::encrypt(const round_keys_type& round_keys,
+                            block_type& block) noexcept {
+  encrypt(round_keys, block, block);
+}
+
+inline auto aes128::encryption(const round_keys_type& round_keys,
+                               const block_type& block) noexcept -> block_type {
+  block_type result{};
+  encrypt(round_keys, block, result);
+  return result;
+}
+
 constexpr void aes128::decrypt(const uint8_t* keys,  //
-                               const uint8_t* src, uint8_t* dst) noexcept {
+                               const uint8_t* src,
+                               uint8_t* dst) noexcept {
   uint8_t tmp[block_size];
   add_round_key(keys + block_size * rounds, src, dst);
   inv_shift_rows(dst, tmp);
@@ -68,18 +99,47 @@ constexpr void aes128::decrypt(const uint8_t* keys,  //
   add_round_key(keys, tmp, dst);
 }
 
+// inline void aes128::decrypt(const round_keys_type& round_keys,  //
+//                             block_type& src,
+//                             block_type& dst) noexcept {
+//   add_round_key(round_keys.data[rounds], src);
+//   inv_shift_rows(src, dst);
+//   inv_sub_bytes(dst);
+//   for (size_t i = rounds - 1; i > 0; --i) {
+//     add_round_key(round_keys.data[i], dst);
+//     inv_mix_columns(dst, src);
+//     inv_shift_rows(src, dst);
+//     inv_sub_bytes(dst);
+//   }
+//   add_round_key(round_keys.data[0], dst);
+// }
+
 inline void aes128::decrypt(const round_keys_type& round_keys,  //
-                            block_type& src, block_type& dst) noexcept {
-  add_round_key(round_keys.data[rounds], src);
-  inv_shift_rows(src, dst);
+                            const block_type& src,
+                            block_type& dst) noexcept {
+  buffer = src;
+  add_round_key(round_keys.data[rounds], buffer);
+  inv_shift_rows(buffer, dst);
   inv_sub_bytes(dst);
   for (size_t i = rounds - 1; i > 0; --i) {
     add_round_key(round_keys.data[i], dst);
-    inv_mix_columns(dst, src);
-    inv_shift_rows(src, dst);
+    inv_mix_columns(dst, buffer);
+    inv_shift_rows(buffer, dst);
     inv_sub_bytes(dst);
   }
   add_round_key(round_keys.data[0], dst);
+}
+
+inline void aes128::decrypt(const round_keys_type& round_keys,
+                            block_type& block) noexcept {
+  decrypt(round_keys, block, block);
+}
+
+inline auto aes128::decryption(const round_keys_type& round_keys,
+                               const block_type& block) noexcept -> block_type {
+  block_type result{};
+  decrypt(round_keys, block, result);
+  return result;
 }
 
 constexpr auto aes128::s_box(uint8_t x) noexcept -> uint8_t {
@@ -197,7 +257,8 @@ constexpr void aes128::mix_column(const uint8_t* src,
                                   uint8_t* col,  //
                                   size_t i,
                                   size_t j,  //
-                                  size_t k, size_t l) noexcept {
+                                  size_t k,
+                                  size_t l) noexcept {
   {
     const uint8_t x = src[i];
     const uint8_t x2 = mul2(x);

@@ -169,27 +169,50 @@ struct aes128 {
     friend constexpr auto operator<=>(const round_keys_type&,
                                       const round_keys_type&) noexcept =
         default;
+
+    constexpr const auto& operator[](size_t index) const noexcept {
+      return data[index];
+    }
     block_type data[rounds + 1];
   };
   static_assert(alignof(round_keys_type) == alignof(block_type));
+
+  static constexpr auto random_key(auto&& rng) noexcept -> key_type {
+    key_type result;
+    result.data[0] = (rng() << 32) | rng();
+    result.data[1] = (rng() << 32) | rng();
+    return result;
+  }
+
+  static constexpr auto random_block(auto&& rng) noexcept -> block_type {
+    block_type result;
+    result.data[0] = (rng() << 32) | rng();
+    result.data[1] = (rng() << 32) | rng();
+    return result;
+  }
 
   static constexpr void expand_key(uint8_t* round_keys) noexcept;
   static constexpr void expand_key(const uint8_t* key,
                                    uint8_t* round_keys) noexcept;
 
+  static constexpr auto expansion(const key_type& key) noexcept
+      -> round_keys_type {
+    return {key};
+  }
+
   static constexpr void encrypt(const uint8_t* keys,  //
                                 const uint8_t* src,
                                 uint8_t* dst) noexcept;
-  static void encrypt(const round_keys_type& round_keys,  //
-                      block_type& src,
-                      block_type& dst) noexcept;
+  // static void encrypt(const round_keys_type& round_keys,  //
+  //                     block_type& src,
+  //                     block_type& dst) noexcept;
 
   static constexpr void decrypt(const uint8_t* keys,  //
                                 const uint8_t* src,
                                 uint8_t* dst) noexcept;
-  static void decrypt(const round_keys_type& round_keys,  //
-                      block_type& src,
-                      block_type& dst) noexcept;
+  // static void decrypt(const round_keys_type& round_keys,  //
+  //                     block_type& src,
+  //                     block_type& dst) noexcept;
 
   static constexpr auto s_box(uint8_t x) noexcept -> uint8_t;
   static constexpr auto inv_s_box(uint8_t x) noexcept -> uint8_t;
@@ -253,6 +276,22 @@ struct aes128 {
   static constexpr void inv_mix_columns(const uint64_t src[2],
                                         uint64_t dst[2]) noexcept;
   static void inv_mix_columns(const block_type& src, block_type& dst) noexcept;
+
+  void encrypt(const round_keys_type& round_keys,
+               const block_type& src,
+               block_type& dst) noexcept;
+  void encrypt(const round_keys_type& round_keys, block_type& block) noexcept;
+  auto encryption(const round_keys_type& round_keys,
+                  const block_type& block) noexcept -> block_type;
+
+  void decrypt(const round_keys_type& round_keys,
+               const block_type& src,
+               block_type& dst) noexcept;
+  void decrypt(const round_keys_type& round_keys, block_type& block) noexcept;
+  auto decryption(const round_keys_type& round_keys,
+                  const block_type& block) noexcept -> block_type;
+  // State
+  block_type buffer{};
 };
 
 }  // namespace lyrahgames::cipher
